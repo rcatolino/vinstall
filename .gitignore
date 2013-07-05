@@ -1,0 +1,7 @@
+*~
+.*.swp
+doc/
+ftplugin/
+plugin/
+*.zip
+*.tar*

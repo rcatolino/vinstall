@@ -1,0 +1,78 @@
+#!/usr/bin/python3.3
+import os;
+import re;
+import subprocess;
+import sys;
+
+def execCommand(command, vfile):
+  result = subprocess.check_output(command)
+  listfile = open(vfile, "wb");
+  listfile.write(result)
+
+def install(file, vfile):
+  if len(file) == 2 and file[1] == "zip":
+    execCommand(["unzip", '.'.join(file)], vfile)
+  elif (len(file) == 3 and file[1] == "tar" and file[2] == "gz") or (len(file) == 2 and file[1] == "tgz"):
+    execCommand(["tar", "-xvzf", '.'.join(file)], vfile)
+  elif (len(file) == 3 and file[1] == "tar" and file[2] == "bz2") or (len(file) == 2 and file[1] == "tbz2"):
+    execCommand(["tar", "-xvjf", '.'.join(file)], vfile)
+  else:
+    print("Invalid archive")
+    sys.exit()
+
+def uninstall(vfile, filename):
+  for line in vfile:
+    linea = re.split(' ', line.strip())
+    if len(linea) > 1:
+      if linea[0].strip() == "inflating:":
+        subprocess.call(["rm", linea[1].strip()])
+    else:
+      subprocess.call(["rm", line.strip()])
+
+  subprocess.call(["rm", filename])
+
+def getfile(filestring):
+  return re.split('\.', os.path.basename(filestring))
+
+def start(arg):
+  if len(arg) <= 1:
+    print("Missing argument")
+    sys.exit()
+
+  if len(arg) == 3:
+    if arg[1] != "-r":
+      print("Wrong option " + arg[1])
+      sys.exit()
+
+    filea = getfile(arg[2])
+    if not (os.path.isfile(arg[2]) and len(filea) == 2 and filea[1] == "vinstall"):
+      print(arg[2] + " is not a valid vinstall file")
+      sys.exit()
+
+    dirs = os.path.dirname(arg[2])
+    if os.path.isdir(dirs):
+      os.chdir(dirs)
+
+    listfile = open(os.path.basename(arg[2]), "r")
+    uninstall(listfile, arg[2])
+
+  if len(arg) == 2:
+    file = getfile(arg[1])
+    vfile = file[0] + ".vinstall"
+    if len(file) == 1:
+      print("not an archive")
+      sys.exit();
+
+    dirs = os.path.dirname(arg[1])
+    if os.path.isdir(dirs):
+      os.chdir(dirs)
+
+    if (os.path.isfile(vfile)):
+      print("This plugin seems to be already installed")
+      sys.exit()
+
+    print("Installing " + file[0])
+    install(file, vfile)
+
+start(sys.argv)
+
