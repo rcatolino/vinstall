@@ -4,9 +4,15 @@ import re;
 import subprocess;
 import sys;
 
+def printHelp():
+  print("Usage :")
+  print("\tvinstall archive.zip|archive.tar.gz|archive.tar.bz2\t Install the package 'archive'")
+  print("\tvinstall -r archive.vinstall\t Remove the package 'archive'")
+  print("\tvinstall -h|--help\t Display this help")
+
 def execCommand(command, vfile):
   result = subprocess.check_output(command)
-  listfile = open(vfile, "wb");
+  listfile = open(vfile, "wb")
   listfile.write(result)
 
 def install(file, vfile):
@@ -18,7 +24,7 @@ def install(file, vfile):
     execCommand(["tar", "-xvjf", '.'.join(file)], vfile)
   else:
     print("Invalid archive")
-    sys.exit()
+    return
 
 def uninstall(vfile, filename):
   for line in vfile:
@@ -37,17 +43,19 @@ def getfile(filestring):
 def start(arg):
   if len(arg) <= 1:
     print("Missing argument")
-    sys.exit()
+    printHelp()
+    return
 
   if len(arg) == 3:
     if arg[1] != "-r":
       print("Wrong option " + arg[1])
-      sys.exit()
+      printHelp()
+      return
 
     filea = getfile(arg[2])
     if not (os.path.isfile(arg[2]) and len(filea) == 2 and filea[1] == "vinstall"):
       print(arg[2] + " is not a valid vinstall file")
-      sys.exit()
+      return
 
     dirs = os.path.dirname(arg[2])
     if os.path.isdir(dirs):
@@ -57,11 +65,15 @@ def start(arg):
     uninstall(listfile, arg[2])
 
   if len(arg) == 2:
+    if arg[1] == "-h" or arg[1] == "--help":
+      printHelp()
+      return
+
     file = getfile(arg[1])
     vfile = file[0] + ".vinstall"
     if len(file) == 1:
       print("not an archive")
-      sys.exit();
+      return
 
     dirs = os.path.dirname(arg[1])
     if os.path.isdir(dirs):
@@ -69,10 +81,14 @@ def start(arg):
 
     if (os.path.isfile(vfile)):
       print("This plugin seems to be already installed")
-      sys.exit()
+      return
 
     print("Installing " + file[0])
     install(file, vfile)
+
+  if len(arg) > 3:
+    print("Too many arguments")
+    printHelp()
 
 start(sys.argv)
 
